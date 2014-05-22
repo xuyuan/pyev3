@@ -21,23 +21,29 @@ def _set_trigger(color, name, trigger):
 
 
 def set_color(name, color):
+    '''turn LED to given color
+    parameters
+    ----------
+        - name: name of LED, e.g. left, right or all
+        - color: {'green", 'yellow', 'red'}
     '''
-    '''
-    if name == 'all':
+    name_l = name.lower()
+    if name_l == 'all':
         for n in NAMES:
             set_color(n, color)
         return
 
-    if name not in NAMES:
+    if name_l not in NAMES:
         raise RuntimeError('unknow LED name: ' + name)
 
     if color:
-        if color == 'yellow':
+        color_l = color.lower()
+        if color_l == 'yellow':
             for c in COLORS:
                 _set_trigger(c, name, 'default-on')
-        elif color in COLORS:
+        elif color_l in COLORS:
             for c in COLORS:
-                if c == color:
+                if c == color_l:
                     _set_trigger(c, name, 'default-on')
                 else:
                     _set_trigger(c, name, 'none')
