@@ -6,10 +6,16 @@ LEDS_PATH = '/sys/class/leds/ev3:'
 COLORS = {'green', 'red'}
 NAMES = {'left', 'right'}
 
+TRIGGERS = {}
+for c in COLORS:
+    for n in NAMES:
+        path = LEDS_PATH + c + ':' + n + '/trigger'
+        TRIGGERS[c + n] = open(path, 'wb')
+
 
 def _set(color, name, key, value):
     led_key_path = LEDS_PATH + color + ':' + name + '/' + key
-    with open(led_key_path, 'w') as f:
+    with open(led_key_path, 'wb') as f:
         f.write(value)
 
 
@@ -21,7 +27,9 @@ def _set_trigger(color, name, trigger):
         - name: left or right
         - trigger: none, mmc0, timer, heartbeat, default-on
     '''
-    _set(color, name, 'trigger', trigger)
+    f = TRIGGERS[color + name]
+    f.write(trigger)
+    f.flush()
 
 
 def _set_trigger_ext(color, name, trigger):
