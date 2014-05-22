@@ -122,7 +122,7 @@ if __name__ == '__main__':
     print 'set_color all None'
     set_color('all', None)
     sleep(1)
-    
+
     print 'set_color left green'
     set_color('left', 'green')
     sleep(1)
