@@ -1,4 +1,4 @@
-'''
+'''LED control for Lego Mindstorms EV3
 '''
 
 
