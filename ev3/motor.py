@@ -91,6 +91,47 @@ class Motor(Device):
         self._run_file.write(str(v))
         self._run_file.flush()
 
+    @property
+    def regulation_mode(self):
+        '''The regulation_mode attribute has two possible values on and off - the default is off.
+
+        the speed_setpoint in unregulated mode just sends a percentage of the battery voltage to the motor.
+        When the batteries get depleted, the percentage stays the same but the resulting voltage at the motor
+        goes down in proportion to the battery, and the motor will run slower.
+
+        Turning regulation on in this case will make the EV3 driver the ports a little harder to
+        compensate for the lower battery voltage to try and keep the speed at the speed_setpoint.
+        '''
+        return self._read('regulation_mode')
+
+    @regulation_mode.setter
+    def regulation_mode(self, v):
+        self._write('regulation_mode', v)
+
+    @property
+    def brake_mode(self):
+        '''the brake_mode attribute improves the ability of the motor to stop quickly:
+        when brake_mode is off, the motor tends to "coast" to a stop if you turn it off suddenly.
+        when it is on, the driver applies a short across the motor terminals,
+        so the motor stops more precise and harder.
+        '''
+        return self._read('brake_mode')
+
+    @brake_mode.setter
+    def brake_mode(self, v):
+        self._write('brake_mode', v)
+
+    @property
+    def hold_mode(self):
+        '''It is used to control if the motor holds its position after it has been turned off.
+        Be careful, this can consume quite a bit of power if you are trying to hold a large load stationary.
+        '''
+        return self._read('hold_mode')
+
+    @hold_mode.setter
+    def hold_mode(self, v):
+        self._write('hold_mode', v)
+
 
 def all():
     motor_path = '/sys/class/tacho-motor/'
@@ -109,6 +150,6 @@ if __name__ == '__main__':
     m.speed_setpoint = 50
     m.run = 1
     time.sleep(3)
-    m.speed_setpoint = 100
-    time.sleep(3)
+    #m.speed_setpoint = 100
+    #time.sleep(3)
     m.run = 0
