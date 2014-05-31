@@ -15,8 +15,9 @@ for c in COLORS:
 
 def _set(color, name, key, value):
     led_key_path = LEDS_PATH + color + ':' + name + '/' + key
-    with open(led_key_path, 'wb') as f:
+    with open(led_key_path, 'w') as f:
         f.write(value)
+        f.flush()
 
 
 def _set_trigger(color, name, trigger):
