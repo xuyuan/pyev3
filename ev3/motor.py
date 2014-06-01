@@ -10,7 +10,8 @@ from device import Device
 class Motor(Device):
     def __init__(self, path):
         super(Motor, self).__init__(path)
-        self._position_file = self._open('position', 'r')
+        self._position_file = self._open('position', 'w+r')
+        self._position_setpoint_file = self._open('position_setpoint', 'w+r')
         self._speed_file = self._open('speed', 'r')
         self._speed_setpoint_file = self._open('speed_setpoint', 'w+r')
         self._power_file = self._open('power', 'r')
@@ -24,8 +25,18 @@ class Motor(Device):
     def position(self):
         '''a read-only indication of how many tacho ticks the driver has counted.
         The number has a range of +/- 2,147,483,648
+
+        remember, the tacho motor counts pulses, not degrees.
+        It just happens that the engineers at LEGO designed the motors to count 360 pulses for a full circle!
         '''
         return int(self._position_file.read())
+
+    @position.setter
+    def position(self, v):
+        '''useful to clear current value
+        '''
+        self._position_file.write(str(v))
+        self._position_file.flush()
 
     @property
     def speed(self):
@@ -66,8 +77,16 @@ class Motor(Device):
     def run_mode(self):
         '''It determines how the motor is going to run.
         The default `run_mode` when you plug in a motor is `forever`.
+
+        `forever`
+        `time`
+        `position`
         '''
         return self._read('run_mode')
+
+    @run_mode.setter
+    def run_mode(self, v):
+        self._write('run_mode', v)
 
     @property
     def speed_setpoint(self):
@@ -132,6 +151,59 @@ class Motor(Device):
     def hold_mode(self, v):
         self._write('hold_mode', v)
 
+    @property
+    def time_setpoint(self):
+        '''As soon as we set a value and tell the motor to run,
+        it will run for time_setpoint milliseconds from that point in time.
+        '''
+        return int(self._read('time_setpoint'))
+
+    @time_setpoint.setter
+    def time_setpoint(self, t):
+        self._write('time_setpoint', str(t))
+
+    @property
+    def ramp_up(self):
+        '''the number of milliseconds that it would take to ramp the motor up from 0% to 100% power.
+        '''
+        return int(self._read('ramp_up'))
+
+    @ramp_up.setter
+    def ramp_up(self, t):
+        self._write('ramp_up', str(t))
+
+    @property
+    def ramp_down(self):
+        '''the number of milliseconds that it would take to ramp the motor down from 100% to 0% power.
+        '''
+        return int(self._read('ramp_down'))
+
+    @ramp_down.setter
+    def ramp_down(self, t):
+        self._write('ramp_down', str(t))
+
+    @property
+    def position_setpoint(self):
+        '''target position when `run_mode` is 'position'
+        '''
+        return int(self._position_setpoint_file.read())
+
+    @position_setpoint.setter
+    def position_setpoint(self, v):
+        self._position_setpoint_file.write(str(v))
+        self._position_setpoint_file.flush()
+
+    @property
+    def position_mode(self):
+        ''''absolute' or 'relative' for each target position set by `position_setpoint`.
+        The default value for `position_mode` is 'absolute'.
+        '''
+        return self._read('position_mode')
+
+    @position_mode.setter
+    def position_mode(self, v):
+        self._write('position_mode', v)
+
 
 def all():
     motor_path = '/sys/class/tacho-motor/'
@@ -147,9 +219,15 @@ if __name__ == '__main__':
         print m
 
     m = all_motors[0]
+    m.position = 0
+    m.regulation_mode = 'on'
+    m.brake_mode = 'on'
+    m.hold_mode = 'on'
+    m.run_mode = 'position'
+    m.ramp_up = 300
+    m.ramp_down = 300
     m.speed_setpoint = 50
+    m.position_setpoint = 180
+    m.time_setpoint = 3000
     m.run = 1
-    time.sleep(3)
-    #m.speed_setpoint = 100
-    #time.sleep(3)
-    m.run = 0
+    #m.run = 0
