@@ -6,7 +6,7 @@ import subprocess
 
 
 def say(text, language='en'):
-    subprocess.call('espeak "' + text + '" -v ' + language + ' -p 20 --stdout | aplay -q', shell=True)
+    subprocess.call('espeak "' + text + '" -v ' + language + ' --stdout | play -q -V1 -t wav - echo 0.8 0.8 5 0.7 echo 0.8 0.7 6 0.7 echo 0.8 0.7 10 0.7', shell=True)
 
 
 if __name__ == '__main__':
