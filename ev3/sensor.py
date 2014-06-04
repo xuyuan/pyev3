@@ -147,11 +147,37 @@ class IRSeeker(InfraredSensor):
         return self.proximity * 0.02
 
 
+class IRRemote(InfraredSensor):
+    '''InfraredSensor in IR-REMOTE mode
+    '''
+    def __init__(self, channel=1, path=None):
+        super(IRRemote, self).__init__(path)
+        self.mode = 'IR-REMOTE'
+        self.channel = channel
+
+    @property
+    def button(self):
+        '''
+        Value	Description
+        0	none
+        1	red up
+        2	red down
+        3	blue up
+        4	blue down
+        5	red up and blue up
+        6	red up and blue down
+        7	red down and blue up
+        8	red down and blue down
+        9	beacon mode on
+        10	red up and red down
+        11	blue up and blue down
+        '''
+        return self.value[0]
+
+
 if __name__ == '__main__':
     all_sensors = all()
     for s in all_sensors:
         print '--------------------'
         print s
 
-    s = IRSeeker()
-    print s
