@@ -102,7 +102,8 @@ class IRProx(InfraredSensor):
 
     @property
     def proximity(self):
-        '''[0, 100] in percentage, 0 means very close, and 100 means very far
+        '''[0, 100] in percentage
+        0 means very close, and 100 means very far (approx. 70cm)
         '''
         return self.value[0]
 
@@ -110,7 +111,41 @@ class IRProx(InfraredSensor):
     def distance(self):
         '''distance in meters
         '''
-        return self.proximity * 0.7
+        return self.proximity * 0.007
+
+
+class IRSeeker(InfraredSensor):
+    '''InfraredSensor in IR-SEEK mode
+
+    The absence of a beacon on a channel can be detected when Proximity == -128 (and heading == 0)
+    parameters
+    ----------
+        - channel: channel of beacon (only channel 1 works for me)
+    '''
+    def __init__(self, channel=1, path=None):
+        super(IRSeeker, self).__init__(path)
+        self.mode = 'IR-SEEK'
+        self.channel = channel
+
+    @property
+    def heading(self):
+        '''-25: far left, +25: far right
+        '''
+        return self.value[(self.channel - 1) * 2]
+
+    @property
+    def proximity(self):
+        '''0: close
+        100: far away - approx. 200cm
+        '''
+        return self.value[1 + (self.channel - 1) * 2]
+
+    @property
+    def distance(self):
+        '''distance in meters
+        '''
+        return self.proximity * 0.02
+
 
 if __name__ == '__main__':
     all_sensors = all()
@@ -118,5 +153,5 @@ if __name__ == '__main__':
         print '--------------------'
         print s
 
-    s = IRProx()
+    s = IRSeeker()
     print s
