@@ -15,6 +15,8 @@ PY_BIN_DATA_FROMAT = {'u8': 'B',       # usigned char (8-bit)
                       's32': 'l',      # int (32-bit)
                       'float': 'f'}    # float (32-bit)
 
+SENSOR_PATH = '/sys/class/msensor/'
+
 
 class Sensor(Device):
     def __init__(self, path):
@@ -33,11 +35,12 @@ class Sensor(Device):
 
     @property
     def type_id(self):
-        return self._read('type_id')
+        return int(self._read('type_id'))
 
     @property
     def value(self):
         #return [self._read('value' + str(i)) for i in range(self.num_values)]
+        self._bin_data_file.seek(0)
         bin_data = self._bin_data_file.read()
         v = array.array(self._bin_data_formate)
         v.fromstring(bin_data)
@@ -62,13 +65,58 @@ class Sensor(Device):
 
 
 def all():
-    sensor_path = '/sys/class/msensor/'
-    sensor_names = os.listdir(sensor_path)
-    return [Sensor(sensor_path + s) for s in sensor_names]
+    sensor_names = os.listdir(SENSOR_PATH)
+    return [Sensor(SENSOR_PATH + s) for s in sensor_names]
 
+
+def find_sensor_path_by_id(type_id):
+    '''help function: find sensor path by given type id
+    '''
+    sensor_names = os.listdir(SENSOR_PATH)
+    for s in sensor_names:
+        with open(os.path.join(SENSOR_PATH, s + '/type_id'), 'r') as type_id_file:
+            type_id_value = int(type_id_file.read())
+            if type_id_value == type_id:
+                return os.path.join(SENSOR_PATH, s)
+    return None
+
+
+class InfraredSensor(Sensor):
+    '''LEGO EV3 Infrared Sensor (45509)
+    '''
+    def __init__(self, path=None):
+        if not path:
+            path = find_sensor_path_by_id(33)
+        if path:
+            super(InfraredSensor, self).__init__(path)
+        else:
+            raise RuntimeError('No InfraredSensor is connected')
+
+
+class IRProx(InfraredSensor):
+    '''InfraredSensor in IR-PROX mode
+    '''
+    def __init__(self, path=None):
+        super(IRProx, self).__init__(path)
+        self.mode = 'IR-PROX'
+
+    @property
+    def proximity(self):
+        '''[0, 100] in percentage, 0 means very close, and 100 means very far
+        '''
+        return self.value[0]
+
+    @property
+    def distance(self):
+        '''distance in meters
+        '''
+        return self.proximity * 0.7
 
 if __name__ == '__main__':
     all_sensors = all()
     for s in all_sensors:
         print '--------------------'
         print s
+
+    s = IRProx()
+    print s
