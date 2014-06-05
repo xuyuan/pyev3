@@ -32,6 +32,7 @@ class Motor(Device):
         remember, the tacho motor counts pulses, not degrees.
         It just happens that the engineers at LEGO designed the motors to count 360 pulses for a full circle!
         '''
+        self._position_file.seek(0)
         return int(self._position_file.read())
 
     @position.setter
