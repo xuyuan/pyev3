@@ -122,29 +122,42 @@ class IRSeeker(InfraredSensor):
     ----------
         - channel: channel of beacon (only channel 1 works for me)
     '''
+    DISTANCE_SCALE = 0.02
+    
     def __init__(self, channel=1, path=None):
         super(IRSeeker, self).__init__(path)
         self.mode = 'IR-SEEK'
         self.channel = channel
+        self._idx = (self.channel - 1) * 2
 
     @property
     def heading(self):
         '''-25: far left, +25: far right
         '''
-        return self.value[(self.channel - 1) * 2]
+        return self.value[self._idx]
 
     @property
     def proximity(self):
         '''0: close
         100: far away - approx. 200cm
         '''
-        return self.value[1 + (self.channel - 1) * 2]
+        return self.value[self._idx + 1]
 
     @property
     def distance(self):
         '''distance in meters
         '''
-        return self.proximity * 0.02
+        return self.proximity * self.DISTANCE_SCALE
+
+    @property
+    def heading_and_proximity(self):
+        v = self.value
+        return v[self._idx:self._idx + 2]
+
+    @property
+    def heading_and_distance(self):
+        v = self.value
+        return [v[self._idx], v[self._idx + 1] * self.DISTANCE_SCALE]
 
 
 class IRRemote(InfraredSensor):
