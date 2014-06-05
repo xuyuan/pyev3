@@ -100,8 +100,12 @@ class Motor(Device):
 
     @speed_setpoint.setter
     def speed_setpoint(self, v):
-        self._speed_setpoint_file.write(str(v))
-        self._speed_setpoint_file.flush()
+        try:
+            nv = min(100, max(-100, int(v)))
+            self._speed_setpoint_file.write(str(nv))
+            self._speed_setpoint_file.flush()
+        except IOError as e:
+            raise Exception("I/O error({0}): {1}".format(e.strerror, v))
 
     @property
     def run(self):

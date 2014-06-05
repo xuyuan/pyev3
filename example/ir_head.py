@@ -16,6 +16,15 @@ head_motor.ramp_up = 300
 head_motor.ramp_down = 300
 head_motor.speed_setpoint = 20
 
+
+left_motor = Motor('B')
+right_motor = Motor('C')
+
+for m in [left_motor, right_motor]:
+    m.ramp_up = 300
+    m.ramp_down = 300
+    m.speed_setpoint = 20
+
 head_scan_direction = 1
 scanning = False
 state_changed = False
@@ -28,14 +37,25 @@ try:
             head_motor.run_mode = 'forever'
             head_motor.speed_setpoint = heading
             scanning = False
+
+            rot = heading + head_motor.position
+            forward = (distance - 0.5) * 200
+            left_motor.run_mode = 'forever'
+            left_motor.speed_setpoint = rot + forward
+            right_motor.run_mode = 'forever'
+            right_motor.speed_setpoint = -rot + forward
+            left_motor.run = 1
+            right_motor.run = 1
         else:
             head_motor.run_mode = 'forever'
-            if head_motor.position > 90:
+            if head_motor.position > 145:
                 head_scan_direction = -1
-            elif head_motor.position < -90:
+            elif head_motor.position < -145:
                 head_scan_direction = 1
             head_motor.speed_setpoint = head_scan_direction * 15
             scanning = True
+            left_motor.run = 0
+            right_motor.run = 0
 
         head_motor.run = 1
         if scanning != last_scanning:
@@ -50,3 +70,5 @@ finally:
     head_motor.position_mode = 'absolute'
     head_motor.position_setpoint = 0
     head_motor.run = 1
+    left_motor.run = 0
+    right_motor.run = 0
