@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 '''Text To Speach for Lego Mindstorms EV3
+
+Please install sox(play) first: apt-get install sox
 '''
 
 import subprocess
