@@ -25,4 +25,4 @@ while True:
     bt = ir.button
     if bt in value_description.keys():
         say(value_description[bt])
-        time.sleep(0.1)
+        time.sleep(0.5)
