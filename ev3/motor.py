@@ -6,9 +6,12 @@ https://github.com/mindboards/ev3dev/wiki/Using-Motors
 import os
 from device import Device
 
+MOTOR_PATH = '/sys/class/tacho-motor/'
+
 
 class Motor(Device):
-    def __init__(self, path):
+    def __init__(self, port):
+        path = os.path.join(MOTOR_PATH, 'out' + port + ':motor:tacho')
         super(Motor, self).__init__(path)
         self._position_file = self._open('position', 'w+r')
         self._position_setpoint_file = self._open('position_setpoint', 'w+r')
@@ -206,28 +209,33 @@ class Motor(Device):
 
 
 def all():
-    motor_path = '/sys/class/tacho-motor/'
-    sensor_names = os.listdir(motor_path)
-    return [Motor(motor_path + s) for s in sensor_names]
+    motors = []
+    for s in ['A', 'B', 'C', 'D']:
+        try:
+            m = Motor(s)
+            motors.append(m)
+        except:
+            pass
+    return motors
 
 
 if __name__ == '__main__':
-    import time
+    #import time
     all_motors = all()
     for m in all_motors:
         print '--------------------'
         print m
 
-    m = all_motors[0]
-    m.position = 0
-    m.regulation_mode = 'on'
-    m.brake_mode = 'on'
-    m.hold_mode = 'on'
-    m.run_mode = 'position'
-    m.ramp_up = 300
-    m.ramp_down = 300
-    m.speed_setpoint = 50
-    m.position_setpoint = 180
-    m.time_setpoint = 3000
-    m.run = 1
+    #m = all_motors[0]
+    #m.position = 0
+    #m.regulation_mode = 'on'
+    #m.brake_mode = 'on'
+    #m.hold_mode = 'on'
+    #m.run_mode = 'position'
+    #m.ramp_up = 300
+    #m.ramp_down = 300
+    #m.speed_setpoint = 50
+    #m.position_setpoint = 180
+    #m.time_setpoint = 3000
+    #m.run = 1
     #m.run = 0
