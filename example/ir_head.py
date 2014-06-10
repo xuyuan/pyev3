@@ -4,6 +4,7 @@
 import time
 from sensor import IRSeeker
 from motor import Motor
+from move import MoveTank
 import leds
 import tts
 
@@ -16,14 +17,7 @@ head_motor.ramp_up = 300
 head_motor.ramp_down = 300
 head_motor.speed_setpoint = 20
 
-
-left_motor = Motor('B')
-right_motor = Motor('C')
-
-for m in [left_motor, right_motor]:
-    m.ramp_up = 300
-    m.ramp_down = 300
-    m.speed_setpoint = 20
+move = MoveTank(0.15)
 
 head_scan_direction = 1
 scanning = False
@@ -40,12 +34,7 @@ try:
 
             rot = heading + head_motor.position
             forward = (distance - 0.5) * 200
-            left_motor.run_mode = 'forever'
-            left_motor.speed_setpoint = rot + forward
-            right_motor.run_mode = 'forever'
-            right_motor.speed_setpoint = -rot + forward
-            left_motor.run = 1
-            right_motor.run = 1
+            move.twist = [forward, rot]
         else:
             head_motor.run_mode = 'forever'
             if head_motor.position > 145:
@@ -54,8 +43,7 @@ try:
                 head_scan_direction = 1
             head_motor.speed_setpoint = head_scan_direction * 15
             scanning = True
-            left_motor.run = 0
-            right_motor.run = 0
+            move.stop()
 
         head_motor.run = 1
         if scanning != last_scanning:
