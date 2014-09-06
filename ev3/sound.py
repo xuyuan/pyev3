@@ -1,10 +1,22 @@
 # -*- coding: utf-8 -*-
-'''Text To Speach for Lego Mindstorms EV3
-
-Please install sox(play) first: apt-get install sox
+'''Sound module for Lego Mindstorms EV3, includes:
+    * Text To Speach
+        Please install sox(play) first: apt-get install sox
+    * tone
 '''
 
 import subprocess
+from device import Device
+
+snd_legoev3 = Device('/sys/devices/platform/snd-legoev3')
+
+
+def beep(hz, t=None):
+    if t is None:
+        snd_legoev3._write('tone', str(hz))
+    else:
+        cmd = 'beep -f %d -l %d' % (hz, t)
+        subprocess.call(cmd.split())
 
 
 def _say_cmd(text, language):
@@ -18,8 +30,24 @@ def say(text, language='en'):
 def post_say(text, language='en'):
     return subprocess.Popen(_say_cmd(text, language), shell=True)
 
-
 if __name__ == '__main__':
     say('hi, I am an EV3')
     say('我会说中文', 'zh')
+
+    # twinkle twinkle little star
+    beep(262, 180)
+    beep(262, 180)
+    beep(392, 180)
+    beep(392, 180)
+    beep(440, 180)
+    beep(440, 180)
+    beep(392, 380)
+    beep(349, 180)
+    beep(349, 180)
+    beep(330, 180)
+    beep(330, 180)
+    beep(294, 180)
+    beep(294, 180)
+    beep(262, 400)
+
     post_say('good bye')
