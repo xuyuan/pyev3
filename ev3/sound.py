@@ -16,7 +16,7 @@ def beep(hz, t=None):
     @param hz beep at hz Hz, where 0 < hz < 20000. 0 means stopping beeping
     @param beep for t milliseconds, None means beep for ever
     '''
-    if t is None:
+    if t is None or hz == 0:
         snd_legoev3._write('tone', str(hz))
     else:
         cmd = 'beep -f %d -l %d' % (hz, t)
