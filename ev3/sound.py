@@ -12,6 +12,10 @@ snd_legoev3 = Device('/sys/devices/platform/snd-legoev3')
 
 
 def beep(hz, t=None):
+    '''control the speaker in Tone mode
+    @param hz beep at hz Hz, where 0 < hz < 20000. 0 means stopping beeping
+    @param beep for t milliseconds, None means beep for ever
+    '''
     if t is None:
         snd_legoev3._write('tone', str(hz))
     else:
