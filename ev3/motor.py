@@ -6,18 +6,24 @@ https://github.com/mindboards/ev3dev/wiki/Using-Motors
 import os
 from device import Device
 
-MOTOR_PATH = '/sys/class/tacho-motor/'
+MOTOR_PATH = '/sys/bus/legoev3/devices'
 
 
 class Motor(Device):
     def __init__(self, port):
-        path = os.path.join(MOTOR_PATH, 'out' + port + ':motor:tacho')
+        path = os.path.join(MOTOR_PATH, 'out' + port + ':motor', 'tacho-motor')
+        if not os.path.exists(path):
+            raise IOError("no motor is connected to port " + port)
+        names = os.listdir(path)
+        if len(names) != 1:
+            raise IOError("unexpected files in " + path + ':\n' + str(names))
+        path = os.path.join(path, names[0])
         super(Motor, self).__init__(path)
         self._position_file = self._open('position', 'w+r')
-        self._position_setpoint_file = self._open('position_setpoint', 'w+r')
-        self._speed_file = self._open('speed', 'r')
-        self._speed_setpoint_file = self._open('speed_setpoint', 'w+r')
-        self._power_file = self._open('power', 'r')
+        self._position_setpoint_file = self._open('position_sp', 'w+r')
+        self._speed_file = self._open('pulses_per_second', 'r')
+        self._speed_setpoint_file = self._open('pulses_per_second_sp', 'w+r')
+        self._power_file = self._open('duty_cycle', 'r')
         self._run_file = self._open('run', 'w+r')
 
     @property
@@ -136,59 +142,51 @@ class Motor(Device):
         self._write('regulation_mode', v)
 
     @property
-    def brake_mode(self):
-        '''the brake_mode attribute improves the ability of the motor to stop quickly:
-        when brake_mode is off, the motor tends to "coast" to a stop if you turn it off suddenly.
-        when it is on, the driver applies a short across the motor terminals,
-        so the motor stops more precise and harder.
-        '''
-        return self._read('brake_mode')
-
-    @brake_mode.setter
-    def brake_mode(self, v):
-        self._write('brake_mode', v)
+    def stop_modes(self):
+        return self._read('stop_modes').split()
 
     @property
-    def hold_mode(self):
-        '''It is used to control if the motor holds its position after it has been turned off.
-        Be careful, this can consume quite a bit of power if you are trying to hold a large load stationary.
+    def stop_mode(self):
+        '''They are `coast` (the default) `brake` and `hold`. In coast mode, when the motor is turned off the internal
+        H-bridge that drives the motors is left in a state where there is no load applied to the motor. When you
+        set the stop_mode attribute to brake, the H-bridge applies a short across the motor terminals.
         '''
-        return self._read('hold_mode')
+        return self._read('stop_mode')
 
-    @hold_mode.setter
-    def hold_mode(self, v):
-        self._write('hold_mode', v)
+    @stop_mode.setter
+    def stop_mode(self, v):
+        self._write('stop_mode', v)
 
     @property
     def time_setpoint(self):
         '''As soon as we set a value and tell the motor to run,
         it will run for time_setpoint milliseconds from that point in time.
         '''
-        return int(self._read('time_setpoint'))
+        return int(self._read('time_sp'))
 
     @time_setpoint.setter
     def time_setpoint(self, t):
-        self._write('time_setpoint', str(t))
+        self._write('time_sp', str(t))
 
     @property
     def ramp_up(self):
         '''the number of milliseconds that it would take to ramp the motor up from 0% to 100% power.
         '''
-        return int(self._read('ramp_up'))
+        return int(self._read('ramp_up_sp'))
 
     @ramp_up.setter
     def ramp_up(self, t):
-        self._write('ramp_up', str(t))
+        self._write('ramp_up_sp', str(t))
 
     @property
     def ramp_down(self):
         '''the number of milliseconds that it would take to ramp the motor down from 100% to 0% power.
         '''
-        return int(self._read('ramp_down'))
+        return int(self._read('ramp_down_sp'))
 
     @ramp_down.setter
     def ramp_down(self, t):
-        self._write('ramp_down', str(t))
+        self._write('ramp_down_sp', str(t))
 
     @property
     def position_setpoint(self):
@@ -212,6 +210,10 @@ class Motor(Device):
     def position_mode(self, v):
         self._write('position_mode', v)
 
+    @property
+    def port_name(self):
+        return self._read('port_name')
+
 
 def all():
     motors = []
@@ -219,8 +221,8 @@ def all():
         try:
             m = Motor(s)
             motors.append(m)
-        except:
-            pass
+        except Exception as e:
+            print e
     return motors
 
 
