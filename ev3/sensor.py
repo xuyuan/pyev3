@@ -19,13 +19,20 @@ SENSOR_PATH = '/sys/class/msensor/'
 
 
 class Sensor(Device):
-    def __init__(self, path):
+    def __init__(self, path, type_id=None):
+        if not path and type_id is not None:
+            path = find_sensor_path_by_id(type_id)
+            if not path:
+                raise IOError('No sensor with id %d  is connected' % type_id)
         super(Sensor, self).__init__(path)
 
         self.modes = {''}
         while '' in self.modes:
             self.modes = self._read('modes').split(' ')
         self._update_num_values()
+        
+        if type_id is not None and self.type_id != type_id:
+            raise RuntimeError("type_id doesn't match %d != %d" % (self.type_id, type_id))
 
     def _update_num_values(self):
         self.num_values = int(self._read('num_values'))
@@ -85,12 +92,7 @@ class InfraredSensor(Sensor):
     '''LEGO EV3 Infrared Sensor (45509)
     '''
     def __init__(self, path=None):
-        if not path:
-            path = find_sensor_path_by_id(33)
-        if path:
-            super(InfraredSensor, self).__init__(path)
-        else:
-            raise RuntimeError('No InfraredSensor is connected')
+        super(InfraredSensor, self).__init__(path, 33)
 
 
 class IRProx(InfraredSensor):
@@ -186,6 +188,22 @@ class IRRemote(InfraredSensor):
         11	blue up and blue down
         '''
         return self.value[0]
+
+
+class TouchSensor(Sensor):
+    '''LEGO EV3 Touch Sensor (45507)
+    https://github.com/ev3dev/ev3dev/wiki/LEGO-EV3-Touch-Sensor-%2845507%29
+    '''
+    def __init__(self, path=None):
+        super(TouchSensor, self).__init__(path, 16)
+
+    @property
+    def pressed(self):
+        return self.value[0] == 1
+
+    @property
+    def released(self):
+        return self.value[0] == 0
 
 
 if __name__ == '__main__':
