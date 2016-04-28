@@ -9,12 +9,12 @@ NAMES = {'left', 'right'}
 TRIGGERS = {}
 for c in COLORS:
     for n in NAMES:
-        path = LEDS_PATH + c + ':' + n + '/trigger'
+        path = LEDS_PATH + n + ':' + c + ':ev3dev/trigger'
         TRIGGERS[c + n] = open(path, 'wb')
 
 
 def _set(color, name, key, value):
-    led_key_path = LEDS_PATH + color + ':' + name + '/' + key
+    led_key_path = LEDS_PATH + name + ':' + color + ':ev3dev/' + key
     with open(led_key_path, 'w') as f:
         f.write(value)
         f.flush()
