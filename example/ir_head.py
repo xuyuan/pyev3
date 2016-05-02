@@ -6,7 +6,7 @@ from sensor import IRSeeker
 from motor import Motor
 from move import MoveTank
 import leds
-import tts
+import sound
 
 ir = IRSeeker()
 head_motor = Motor('A')
@@ -49,9 +49,9 @@ try:
         if scanning != last_scanning:
             leds.set_color('all', 'green' if scanning else 'red')
             if not scanning:
-                tts.post_say('I see you!')
+                sound.post_say('I see you!')
             else:
-                tts.post_say('where are you?')
+                sound.post_say('where are you?')
         time.sleep(0.1)
 finally:
     head_motor.run_mode = 'position'
