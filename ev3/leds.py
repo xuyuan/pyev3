@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 '''LED control for Lego Mindstorms EV3
 '''
 
