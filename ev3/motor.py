@@ -1,17 +1,18 @@
 '''motor control for Lego Mindstorms EV3
 
+http://www.ev3dev.org/docs/tutorials/tacho-motors/
 https://github.com/mindboards/ev3dev/wiki/Using-Motors
 '''
 
 import os
 from device import Device
 
-MOTOR_PATH = '/sys/bus/legoev3/devices'
+MOTOR_PATH = '/sys/bus/lego/devices'
 
 
 class Motor(Device):
-    def __init__(self, port):
-        path = os.path.join(MOTOR_PATH, 'out' + port + ':motor', 'tacho-motor')
+    def __init__(self, port, driver_name='lego-ev3-l-motor'):
+        path = os.path.join(MOTOR_PATH, 'out' + port + ':' + driver_name, 'tacho-motor')
         if not os.path.exists(path):
             raise IOError("no motor is connected to port " + port)
         names = os.listdir(path)
@@ -21,14 +22,14 @@ class Motor(Device):
         super(Motor, self).__init__(path)
         self._position_file = self._open('position', 'w+r')
         self._position_setpoint_file = self._open('position_sp', 'w+r')
-        self._speed_file = self._open('pulses_per_second', 'r')
-        self._speed_setpoint_file = self._open('pulses_per_second_sp', 'w+r')
+        self._speed_file = self._open('speed', 'r')
+        self._speed_setpoint_file = self._open('speed_sp', 'w+r')
         self._power_file = self._open('duty_cycle', 'r')
-        self._run_file = self._open('run', 'w+r')
+        self._command_file = self._open('command', 'w')
 
     @property
-    def type(self):
-        return self._read('type')
+    def driver_name(self):
+        return self._read('driver_name')
 
     @property
     def position(self):
@@ -84,19 +85,8 @@ class Motor(Device):
         return self._read('state')
 
     @property
-    def run_mode(self):
-        '''It determines how the motor is going to run.
-        The default `run_mode` when you plug in a motor is `forever`.
-
-        `forever`
-        `time`
-        `position`
-        '''
-        return self._read('run_mode')
-
-    @run_mode.setter
-    def run_mode(self, v):
-        self._write('run_mode', v)
+    def count_per_rot(self):
+        return self._read('count_per_rot')
 
     @property
     def speed_setpoint(self):
@@ -107,55 +97,40 @@ class Motor(Device):
     @speed_setpoint.setter
     def speed_setpoint(self, v):
         try:
-            nv = min(100, max(-100, int(v)))
-            self._speed_setpoint_file.write(str(nv))
+            self._speed_setpoint_file.write(str(v))
             self._speed_setpoint_file.flush()
         except IOError as e:
             raise Exception("I/O error({0}): {1}".format(e.strerror, v))
 
     @property
-    def run(self):
-        '''a numerical value - 0 means stop, anthing else means run
-        '''
-        return int(self._run_file.read())
+    def command(self):
+        return ''  # no read permission
+        #return self._command_file.read()
 
-    @run.setter
-    def run(self, v):
-        self._run_file.write(str(v))
-        self._run_file.flush()
-
-    @property
-    def regulation_mode(self):
-        '''The regulation_mode attribute has two possible values on and off - the default is off.
-
-        the speed_setpoint in unregulated mode just sends a percentage of the battery voltage to the motor.
-        When the batteries get depleted, the percentage stays the same but the resulting voltage at the motor
-        goes down in proportion to the battery, and the motor will run slower.
-
-        Turning regulation on in this case will make the EV3 driver the ports a little harder to
-        compensate for the lower battery voltage to try and keep the speed at the speed_setpoint.
-        '''
-        return self._read('regulation_mode')
-
-    @regulation_mode.setter
-    def regulation_mode(self, v):
-        self._write('regulation_mode', v)
+    @command.setter
+    def command(self, v):
+        self._command_file.write(str(v))
+        self._command_file.flush()
 
     @property
-    def stop_modes(self):
-        return self._read('stop_modes').split()
+    def commands(self):
+        return self._read('commands')
 
     @property
-    def stop_mode(self):
+    def stop_actions(self):
+        return self._read('stop_actions').split()
+
+    @property
+    def stop_action(self):
         '''They are `coast` (the default) `brake` and `hold`. In coast mode, when the motor is turned off the internal
         H-bridge that drives the motors is left in a state where there is no load applied to the motor. When you
         set the stop_mode attribute to brake, the H-bridge applies a short across the motor terminals.
         '''
-        return self._read('stop_mode')
+        return self._read('stop_action')
 
-    @stop_mode.setter
-    def stop_mode(self, v):
-        self._write('stop_mode', v)
+    @stop_action.setter
+    def stop_action(self, v):
+        self._write('stop_action', v)
 
     @property
     def time_setpoint(self):
@@ -199,21 +174,6 @@ class Motor(Device):
         self._position_setpoint_file.write(str(v))
         self._position_setpoint_file.flush()
 
-    @property
-    def position_mode(self):
-        ''''absolute' or 'relative' for each target position set by `position_setpoint`.
-        The default value for `position_mode` is 'absolute'.
-        '''
-        return self._read('position_mode')
-
-    @position_mode.setter
-    def position_mode(self, v):
-        self._write('position_mode', v)
-
-    @property
-    def port_name(self):
-        return self._read('port_name')
-
 
 def all():
     motors = []
@@ -233,8 +193,16 @@ if __name__ == '__main__':
         print '--------------------'
         print m
 
-    #m = all_motors[0]
-    #m.position = 0
+    m = all_motors[0]
+    m.command = 'stop'
+
+    m.speed_setpoint = 500
+    #m.command = 'run-forever'
+
+    m.position_setpoint = 100
+    m.command = 'run-to-abs-pos'
+    #m.command = 'run-to-rel-pos'
+
     #m.regulation_mode = 'on'
     #m.brake_mode = 'on'
     #m.hold_mode = 'on'
